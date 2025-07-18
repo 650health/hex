@@ -32,14 +32,8 @@ defmodule Hex.HTTP do
     request = build_request(url, headers, body)
     profile = Hex.State.fetch!(:httpc_profile)
 
-    retry(method, request, http_opts, @request_retries, profile, fn request, http_opts ->
-      redirect(request, http_opts, @request_redirects, fn request, http_opts ->
-        timeout(request, http_opts, timeout, fn request, http_opts ->
-          :httpc.request(method, request, http_opts, opts, profile)
-          |> handle_response()
-        end)
-      end)
-    end)
+    Hex.HTTP.CurlHttp.request(method, request, http_opts, opts, profile)
+    |> handle_response()
   end
 
   defp fallback(:inet), do: :inet6
