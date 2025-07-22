@@ -4,6 +4,7 @@ defmodule Hex.Application do
   use Application
 
   def start(_, _) do
+    IO.puts("Hex.Application.start()")
     dev_setup()
 
     Mix.SCM.append(Hex.SCM)
@@ -11,6 +12,7 @@ defmodule Hex.Application do
 
     warn_ssl()
     start_httpc()
+    start_katipo()
 
     opts = [strategy: :one_for_one, name: Hex.Supervisor]
     Supervisor.start_link(children(), opts)
@@ -60,6 +62,10 @@ defmodule Hex.Application do
     ]
 
     :httpc.set_options(opts, :hex)
+  end
+
+  defp start_katipo() do
+    Hex.HTTP.KatipoHttp.start()
   end
 
   if Mix.env() == :test do

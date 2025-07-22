@@ -32,7 +32,7 @@ defmodule Hex.HTTP do
     request = build_request(url, headers, body)
     profile = Hex.State.fetch!(:httpc_profile)
 
-    Hex.HTTP.CurlHttp.request(method, request, http_opts, opts, profile)
+    Hex.HTTP.KatipoHttp.request(method, request, http_opts, opts, profile)
     |> handle_response()
   end
 

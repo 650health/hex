@@ -20,24 +20,33 @@ defmodule Hex.MixProject do
 
   def application do
     [
-      extra_applications: [:ssl, :inets, :logger],
+      extra_applications: [:ssl, :inets, :logger, :syntax_tools],
       mod: {Hex.Application, []}
     ]
   end
 
-  defp deps(:test) do
+  defp base_deps() do
     [
-      {:bypass, "~> 1.0.0"},
-      {:cowboy, "~> 2.7.0"},
-      {:mime, "~> 1.0"},
-      {:plug, "~> 1.9.0"},
-      {:plug_cowboy, "~> 2.1.0"},
-      {:plug_crypto, "~> 1.1.2"}
+      {:worker_pool, github: "inaka/worker_pool", branch: "main", override: true},
+      {:metrics, github: "benoitc/erlang-metrics", branch: "master", override: true},
+      {:katipo, github: "puzza007/katipo", branch: "master"}
     ]
   end
 
+  defp deps(:test) do
+    base_deps() ++
+      [
+        {:bypass, "~> 1.0.0"},
+        {:cowboy, "~> 2.7.0"},
+        {:mime, "~> 1.0"},
+        {:plug, "~> 1.9.0"},
+        {:plug_cowboy, "~> 2.1.0"},
+        {:plug_crypto, "~> 1.1.2"}
+      ]
+  end
+
   defp deps(_) do
-    []
+    base_deps()
   end
 
   defp elixirc_options(:prod), do: [debug_info: false]

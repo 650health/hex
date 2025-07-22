@@ -2,6 +2,13 @@ defmodule Hex do
   @moduledoc false
 
   def start() do
+    IO.puts("Hex.start()")
+    # IO.inspect(:code.which(:wpool))
+    IO.inspect(:code.which(:katipo))
+    Code.ensure_loaded!(:wpool)
+    Code.ensure_loaded!(:katipo)
+    Code.ensure_loaded!(:katipo_pool)
+
     {:ok, _} = Application.ensure_all_started(:hex)
   end
 
