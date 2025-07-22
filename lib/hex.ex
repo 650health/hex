@@ -4,6 +4,8 @@ defmodule Hex do
   def start() do
     IO.puts("Hex.start()")
     # IO.inspect(:code.which(:wpool))
+    Code.ensure_compiled!(:katipo)
+    Code.ensure_compiled!(:worker_pool)
     IO.inspect(:code.which(:katipo))
     Code.ensure_loaded!(:wpool)
     Code.ensure_loaded!(:katipo)

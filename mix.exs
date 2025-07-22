@@ -27,9 +27,12 @@ defmodule Hex.MixProject do
 
   defp base_deps() do
     [
-      {:worker_pool, github: "inaka/worker_pool", branch: "main", override: true},
-      {:metrics, github: "benoitc/erlang-metrics", branch: "master", override: true},
-      {:katipo, github: "puzza007/katipo", branch: "master"}
+      # {:worker_pool, github: "inaka/worker_pool", branch: "main", override: true},
+      # {:metrics, github: "benoitc/erlang-metrics", branch: "master", override: true},
+      # {:katipo, github: "puzza007/katipo", branch: "master"},
+      {:worker_pool, path: "vendor/worker_pool", override: true},
+      {:metrics, path: "vendor/metrics", override: true},
+      {:katipo, path: "vendor/katipo"}
     ]
   end
 
