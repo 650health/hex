@@ -35,7 +35,10 @@ defmodule Hex.HTTP do
     retry(method, request, http_opts, @request_retries, profile, fn request, http_opts ->
       redirect(request, http_opts, @request_redirects, fn request, http_opts ->
         timeout(request, http_opts, timeout, fn request, http_opts ->
-          :httpc.request(method, request, http_opts, opts, profile)
+          {url, headers} = request
+          headers = headers ++ [{~c"te", ~c"deflate;q=0"}]
+
+          :httpc.request(method, {url, headers}, http_opts, opts, profile)
           |> handle_response()
         end)
       end)

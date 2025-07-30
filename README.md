@@ -1,39 +1,61 @@
-# Hex
+[Upstream README](https://github.com/hexpm/hex)
 
-[![CI](https://github.com/hexpm/hex/workflows/CI/badge.svg)](https://github.com/hexpm/hex/actions)
+# Hex patched for OpenAI Codex
 
-Hex is a package manager for the Erlang ecosystem.
+Use this fork instead of `hex/hexpm` to have `mix deps.get` work in
+[OpenAI Codex Cloud](https://platform.openai.com/docs/codex/overview).
 
-This project currently provides tasks that integrate with Mix, [Elixir](https://github.com/elixir-lang/elixir)'s build tool.
+## Usage
 
-See [hex.pm](https://hex.pm) for installation instructions and other documentation.
+Add this to your setup script:
 
-## Contributing
+```bash
+curl -o openai_codex_setup.sh "https://raw.githubusercontent.com/650health/hex/refs/heads/latest/openai_codex_setup.sh"
+chmod +x openai_codex_setup.sh
+./openai_codex_setup.sh
 
-Install Hex locally for development with: `mix install`.
+mix deps.get
+```
 
-### Bundled CA certs
+This will:
 
-Hex bundles a list of root CA certificates used for certificate validation in HTTPS. The certificates are fetched from [Mozilla's source tree](http://hg.mozilla.org/releases/mozilla-release/raw-file/default/security/nss/lib/ckfw/builtins/certdata.txt) with curl's [mk-ca-bundle.pl](https://github.com/bagder/curl/blob/master/lib/mk-ca-bundle.pl) script. The bundle created from the Perl script is stored in `lib/hex/http/ca-bundle.crt` and is included in source control, the file should be updated when new releases are made by Mozilla. When Hex is compiled the certificates are parsed and included with the compiled artifacts. The task `mix certdata` automates this process.
+- Download this patched version of hex
+- Download rebar3, needed to download erlang packages
 
-### hexpm
+![OpenAI Codex UI Config](./openai_config.png)
 
-Integration tests run against the API server [hexpm](https://github.com/hexpm/hexpm). It needs to be cloned into `../hexpm` or `HEXPM_PATH` needs to be set and point its location. hexpm also requires postgresql with username `postgres` and password `postgres`.
+## Background
 
-Exclude integration tests with `mix test --exclude integration`.
+When running code in Codex, one must send requests via the
+[proxy server](https://platform.openai.com/docs/codex/overview#internet_access_and_network_proxy).
 
-## License
+Running `mix deps.get` fails in the base environment of the container. When run
+for the first time, `mix deps.get` uses Erlang/OTP `httpc` module to make get
+requests, which has an incompatibility with the Codex proxy server. By default,
+it sends an empty `te` header if the caller doesn't supply one.
 
-   Copyright 2015 Six Colors AB
+The fundamental issue is that the Codex proxy returns a 503 if `te` header is
+set to `""`.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+This patch changes the header to something semantically equivalent
+(`deflate;q=0`), which is equivalent to sending nothing.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+This issue in `httpc` causes `mix` and `hex` to fail in multiple ways:
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+- When running `mix` for the first time, if it detects Hex dependencies, it will
+  first attempt to download hex package manager (using a httpc get request).
+  This will fail due to the httpc issue above.
+- It will also attempt to download rebar3, also using a httpc get requests, also
+  failing.
+- Hex also downloads packages with a httpc get request, which would also fail
+  without this patch.
+
+The first two issues are in `mix`, which `openai_codex_setup.sh` is able to get
+around by downloading this patched version of `hex` using `git` and `rebar3`
+using `curl` and installing manually. The latter issue is in `hex`, which the
+patch in this repo corrects. This is not a patch for `mix`, so any other HTTP
+GET requests made by `mix` may still fail since
+[it also uses `httpc` get requests](https://github.com/elixir-lang/elixir/blob/main/lib/mix/lib/mix/utils.ex#L819).
+
+In the meantime, I have opened an issue in Erlang/OTP to fix the root cause in
+httpc: <https://github.com/erlang/otp/issues/10065>.
